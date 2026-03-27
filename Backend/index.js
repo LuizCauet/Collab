@@ -1,9 +1,14 @@
 // Node.js Server Setup
+const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const {S3Client, PutObjectCommand} = require("@aws-sdk/client-s3");
+const path = require("path");
+
+// Prefer .env for local/dev, but keep backward compatibility with info.env.
+require('dotenv').config();
 require('dotenv').config({path: './info.env'});
 
 // Configure AWS SDK with credentials from the environment
@@ -15,17 +20,50 @@ const s3Client = new S3Client({
     }
 })
 
+const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm'];
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+const fileFilter = (req, file, cb) => {
+    if (ALLOWED_AUDIO_TYPES.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only audio files are allowed'), false);
+    }
+};
+
 const storage = multer.memoryStorage();
-const upload = multer({storage: storage});
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
+    fileFilter: fileFilter,
+});
 
 const app = express();
 const PORT = 4000;
 
+const allowedOrigins = (process.env.CORS_ORIGINS || "https://c0llab.netlify.app,https://www.c0llab.netlify.app,http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no Origin header (like server-to-server or curl)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+    },
+};
+
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
-app.use(cors(
-    {origin: "https://c0llab.netlify.app"} // Enables frontend requests
-));
+app.use(cors(corsOptions));
 
 app.get("/api", (req, res) => {
     res.json({
@@ -37,8 +75,8 @@ app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 });
 
-const users = []; // All users, NOT ENCRYPTED
-const generateID = () => Math.random().toString(36).substring(2,10); // Generates alphanumeric Id eg. 5g8zxr1w
+const users = []; // All users
+const generateID = () => crypto.randomBytes(8).toString('hex'); // Cryptographically secure random 16-char hex ID
 
 // Register Request
 app.post("/api/register", async (req, res) => {
@@ -124,10 +162,11 @@ app.get("/api/all/threads", (req, res) => {
     });
 });
 
-// Shows all users
+// Shows all users (safe fields only — no passwords)
 app.get("/api/all/users", (req, res) => {
+    const safeUsers = users.map(({ id, username }) => ({ id, username }));
     res.json({
-        users: users,
+        users: safeUsers,
     });
 });
 
@@ -192,7 +231,9 @@ app.post("/api/upload", upload.single('audioFile'), async (req, res) => {
         return res.status(400).json({error: 'File not received'});
     }
 
-    const fileName = Date.now() + '-' + file.originalname;
+    // Sanitize the original filename to prevent path traversal and inject characters
+    const safeName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = Date.now() + '-' + crypto.randomBytes(4).toString('hex') + '-' + safeName;
 
     // Sets Parameters
     const uploadParams = {
@@ -215,6 +256,7 @@ app.post("/api/upload", upload.single('audioFile'), async (req, res) => {
             fileUrl: fileUrl,
         });
     } catch (err) {
-        res.status(500).json({ error: 'Upload to S3 failed', details: err.message });
+        console.error('S3 upload error:', err);
+        res.status(500).json({ error: 'Upload to S3 failed' });
     }
 });

@@ -1,4 +1,5 @@
 import React from "react";
+import { apiUrl } from "../api";
 
 const Likes = ({ numberOfLikes, threadId }) => {
 
@@ -8,7 +9,7 @@ const Likes = ({ numberOfLikes, threadId }) => {
         // Prevents from clicking on thread itself
         e.stopPropagation();
 
-        fetch("https://collab-ve2d.onrender.com/api/thread/like", {
+        fetch(apiUrl("/api/thread/like"), {
             method: "POST",
             body: JSON.stringify({
                 threadId,

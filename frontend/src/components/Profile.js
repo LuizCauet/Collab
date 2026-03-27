@@ -2,6 +2,7 @@ import React, { useState, useEffect} from "react";
 import Nav from "./Nav";
 import {useParams} from 'react-router-dom';
 import _, { size } from 'lodash';
+import { apiUrl } from "../api";
 
 const Profile = () => {
     const [isActive, setIsActive] = useState(false); // For Animation
@@ -20,7 +21,7 @@ const Profile = () => {
 
     // Fetch users and username
     useEffect(() => {
-        fetch('https://collab-ve2d.onrender.com/api/all/users')
+        fetch(apiUrl('/api/all/users'))
             .then(response => response.json())
             .then(data => {
                 const user = data.users.find(user => user.id === userId);
@@ -45,7 +46,7 @@ const Profile = () => {
         formData.append('audioFile', audioFile);
         formData.append('userId', userId);
 
-        fetch('https://collab-ve2d.onrender.com/api/upload', {
+        fetch(apiUrl('/api/upload'), {
             method: 'POST',
             body: formData,
         })

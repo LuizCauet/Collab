@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiUrl } from "../api";
 
 const Register = () => {
     const [username, setUsername] = useState("");
@@ -9,7 +10,7 @@ const Register = () => {
     const navigate = useNavigate();
 
     const signUp = () => {
-        fetch("https://collab-ve2d.onrender.com/api/register", {
+        fetch(apiUrl("/api/register"), {
             method: "POST",
             body: JSON.stringify({
                 email,

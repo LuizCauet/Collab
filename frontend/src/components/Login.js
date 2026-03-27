@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiUrl } from "../api";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ const Login = () => {
     const navigate = useNavigate();
 
     const loginUser = () => {
-        fetch("https://collab-ve2d.onrender.com/api/login", {
+        fetch(apiUrl("/api/login"), {
             method: "POST",
             body: JSON.stringify({
                 email,

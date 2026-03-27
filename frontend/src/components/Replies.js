@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Nav from "./Nav";
+import { apiUrl } from "../api";
 
 const Replies = () => {
     const [replyList, setReplyList] = useState([]);
@@ -11,7 +12,7 @@ const Replies = () => {
     const { id } = useParams();
 
     const addReply = () => {
-		fetch("https://collab-ve2d.onrender.com/api/create/reply", {
+        fetch(apiUrl("/api/create/reply"), {
 			method: "POST",
 			body: JSON.stringify({
 				id,
@@ -34,7 +35,7 @@ const Replies = () => {
         setIsActive(true);
 
         const fetchReplies = () => {
-            fetch("https://collab-ve2d.onrender.com/api/thread/replies", {
+            fetch(apiUrl("/api/thread/replies"), {
                 method: "POST",
                 body: JSON.stringify({
                     id,

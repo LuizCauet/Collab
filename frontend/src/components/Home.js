@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Nav from "./Nav";
 import Likes from "./Likes";
 import Comments from "./Comments";
+import { apiUrl } from "../api";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ const Home = () => {
             if (!localStorage.getItem("_id")) {
                 navigate("/");
             } else {
-                fetch("https://collab-ve2d.onrender.com/api/all/threads")
+                fetch(apiUrl("/api/all/threads"))
                 .then((res) => res.json())
                 .then((data) => setThreadList(data.threads))
                 .catch((err) => console.error(err));
@@ -38,7 +39,7 @@ const Home = () => {
     }, [navigate]);
 
     const createThread = () => {
-        fetch("https://collab-ve2d.onrender.com/api/create/thread", {
+        fetch(apiUrl("/api/create/thread"), {
             method: "POST",
             body: JSON.stringify({
                 thread,
@@ -62,7 +63,7 @@ const Home = () => {
     // Gets Audio based on thread and its author's id
     const getAudio = async (thread) => {
         try {
-            const response = await fetch('https://collab-ve2d.onrender.com/api/all/users');
+            const response = await fetch(apiUrl('/api/all/users'));
             const data = await response.json();
             const user = data.users.find(user => user.id === thread.userId);
 

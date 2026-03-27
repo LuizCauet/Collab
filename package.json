@@ -1,0 +1,14 @@
+{
+  "name": "collab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix Backend\" \"npm start --prefix frontend\"",
+    "start:backend": "npm start --prefix Backend",
+    "start:frontend": "npm start --prefix frontend",
+    "install:all": "npm install --prefix Backend && npm install --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
